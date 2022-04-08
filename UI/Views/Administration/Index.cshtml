@@ -4,7 +4,39 @@
     ViewData["Title"] = "Index";
 }
 
-       <a asp-action="CreateRole" asp-controller="Administration" class="btn btn-primary" style="margin-bottom:10px;"><i class="fas fa-plus"></i> Add New Role</a>
+@section bredCrum{
+     <!-- Content Header (Page header) -->
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Role List</h1>
+          </div><!-- /.col -->
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="">Role</a></li>
+              <li class="breadcrumb-item active">List</li>
+            </ol>
+          </div><!-- /.col -->
+        </div><!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+}
+    
+
+
+@if (TempData["message"] != null)
+{    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <p>@TempData["message"]</p>
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+</div>    
+}
+
+
+   <a asp-action="CreateRole" asp-controller="Administration" class="btn btn-primary" style="margin-bottom:10px;"><i class="fas fa-plus"></i> Add New Role</a>
 
    <!-- Main content -->
     <section class="content">

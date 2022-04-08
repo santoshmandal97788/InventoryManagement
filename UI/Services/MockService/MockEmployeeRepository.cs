@@ -50,30 +50,30 @@ namespace UI.Services.MockService
                 {
                     try
                     {
-                        var pwd = Helper.CreateRandomPassword(5); ;
-                        employee.Password = Helper.HashPassword(pwd);
+                        //var pwd = Helper.CreateRandomPassword(5); ;
+                        //employee.Password = Helper.HashPassword(pwd);
                         _appDbContext.Persons.Add(person);
                         _appDbContext.SaveChanges();
                         employee.PersonId = person.PersonId;
-                        employee.RoleId = 13;
+                        //employee.RoleId = 13;
                         _appDbContext.Employees.Add(employee);
 
                         _appDbContext.SaveChanges();
 
                         transaction.Commit();
-                        MailRequest mail = new MailRequest
-                        {
-                            ToEmail= employee.Email,
-                            Subject= "Login Credentials for Inventory Management",                            
-                        };
-                        EmployeeViewModel emp = new EmployeeViewModel   
-                        {
-                            FullName = string.Concat(person.FirstName, " ", person.MiddleName, " ", person.LastName),
-                            Email = employee.Email,
-                            Password= pwd
-                        };
+                        //MailRequest mail = new MailRequest
+                        //{
+                        //    ToEmail= employee.Email,
+                        //    Subject= "Login Credentials for Inventory Management",                            
+                        //};
+                        //EmployeeViewModel emp = new EmployeeViewModel   
+                        //{
+                        //    FullName = string.Concat(person.FirstName, " ", person.MiddleName, " ", person.LastName),
+                        //    Email = employee.Email,
+                        //    Password= pwd
+                        //};
 
-                        _mailService.SendEmailAsync(mail, emp);
+                        //_mailService.SendEmailAsync(mail, emp);
                     }
 
                     catch (Exception ex)
@@ -110,6 +110,7 @@ namespace UI.Services.MockService
                         
                         emp.PersonId = employee.PersonId;
                         emp.Email = employee.Email;
+                        emp.RoleId = employee.RoleId;
                         _appDbContext.Employees.Update(emp);
 
                         _appDbContext.SaveChanges();
@@ -201,6 +202,7 @@ namespace UI.Services.MockService
         public EmployeeViewModel GetEmployeeDetails(int Id)
         {
             var employees = (from emp in _appDbContext.Employees
+                             where emp.EmployeeId == Id
                              join person in _appDbContext.Persons on emp.PersonId equals person.PersonId
                              join Li in _appDbContext.ListItems on person.GenderListItemId equals Li.ListItemId
                              join role in _appDbContext.Roles on emp.RoleId equals role.RoleId

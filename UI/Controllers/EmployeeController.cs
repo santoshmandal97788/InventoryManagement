@@ -12,12 +12,14 @@ namespace UI.Controllers
         private readonly IEmployeeRepository _mockEmployeeRepository;
         private readonly IPersonRepository _mockPersonRepository;
         private readonly IListItemRepository _mockListItemRepository;
+        private readonly IRoleRepository _mockRoleRepository;
 
-        public EmployeeController(IEmployeeRepository mockEmployeeRepository,IListItemRepository mockListItemRepository, IPersonRepository mockPersonRepository )
+        public EmployeeController(IEmployeeRepository mockEmployeeRepository,IListItemRepository mockListItemRepository, IPersonRepository mockPersonRepository, IRoleRepository mockRoleRepository)
         {
             _mockEmployeeRepository = mockEmployeeRepository;
             _mockPersonRepository = mockPersonRepository;
             _mockListItemRepository = mockListItemRepository;
+            _mockRoleRepository = mockRoleRepository;
         }
         [AcceptVerbs("Get", "Post")]
         public IActionResult IsEmailExists(string email, int employeeId)
@@ -88,7 +90,13 @@ namespace UI.Controllers
                 Value = p.ListItemId.ToString(),
                 Text = p.ListItemName
             }).ToList();
+            var roleList = _mockRoleRepository.GetAllRoles().Select(p => new SelectListItem
+            {
+                Value = p.RoleId.ToString(),
+                Text = p.RoleName
+            }).ToList();
             ViewBag.Gender = genderList;
+            ViewBag.Role = roleList;
             return View();
 
         }
@@ -108,7 +116,7 @@ namespace UI.Controllers
                 Employee emp = new Employee
                 {
                     Email = model.Email,
-                    //Password = Helper.HashPassword(model.ConfirmPassword),
+                    Password = Helper.HashPassword(model.ConfirmPassword),
                     //random generating password
                     RoleId = model.RoleId,
 
@@ -121,7 +129,7 @@ namespace UI.Controllers
                     GenderListItemId = model.GenderId
                 };
                 _mockEmployeeRepository.EmployeeIns(emp,person);
-
+                TempData["message"] = "Employee Added Successfully";
                 return RedirectToAction("Index", "Employee");
             }
             return View(model);
@@ -133,14 +141,21 @@ namespace UI.Controllers
             Employee employee = _mockEmployeeRepository.GetEmployee(id);
             if (employee == null)
             {
-                return View("NotFound", id);
+                return RedirectToAction("NotFound", "Error", id);
             }
             var genderList = _mockListItemRepository.GetAllListItemById(1).Select(p => new SelectListItem
             {
                 Value = p.ListItemId.ToString(),
                 Text = p.ListItemName
             }).ToList();
+            var roleList = _mockRoleRepository.GetAllRoles().Select(p => new SelectListItem
+            {
+                Value = p.RoleId.ToString(),
+                Text = p.RoleName
+            }).ToList();
+            
             ViewBag.Gender = genderList;
+            ViewBag.Role = roleList;
             EmployeeViewModel employeeViewModel = new EmployeeViewModel
             {
                 EmployeeId = employee.EmployeeId,
@@ -151,14 +166,14 @@ namespace UI.Controllers
                 LastName = employee.Person.LastName,
                 GenderId= employee.Person.GenderListItemId,
                 Gender = employee.Person.ListItem.ListItemName,
-                RoleId = employee.RoleId,
+                RoleId = employee.Role.RoleId,
                 RoleName= employee.Role.RoleName
             };
             return View(employeeViewModel);
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(EmployeeViewModel model)
+        public IActionResult Edit(EmployeeEditViewModel model)
         {
             if (ModelState.IsValid)
             {
@@ -168,7 +183,7 @@ namespace UI.Controllers
 
                 if (isexists && emp.Email != model.Email)
                 {
-                    ModelState.AddModelError("Emai", "Email Already Exists");
+                    ModelState.AddModelError("Email", "Email Already Exists");
                     return View(model);
                 }
                 emp.Email = model.Email;
@@ -180,6 +195,7 @@ namespace UI.Controllers
                 ppl.GenderListItemId = model.GenderId;
 
                _mockEmployeeRepository.EmployeeUpd(emp, ppl);
+                TempData["message"] = "Employee Updated Successfully";
                 return RedirectToAction("Index");
             }
             return View(model);
@@ -192,7 +208,8 @@ namespace UI.Controllers
             if (employee == null)
             {
                 Response.StatusCode = 404;
-                return View("NotFound", id);
+                //return View("NotFound", id);
+                return RedirectToAction("NotFound", "Error", id);
             }
            // EmployeeViewModel employeeViewModel = new EmployeeViewModel() { EmployeeId = employee.EmployeeId, PersonId = employee.PersonId, FirstName = employee.Person.FirstName, MiddleName= employee.Person.MiddleName, LastName= employee.Person.LastName, Gender= employee.Person.ListItem.ListItemName, Email= employee.Email, RoleId= employee.RoleId, RoleName= employee.Role.RoleName};
             return View(employee);
@@ -200,7 +217,6 @@ namespace UI.Controllers
         }
 
         [HttpPost]
-        //[ValidateAntiForgeryToken]
         public IActionResult Delete(int id)
         {
            
@@ -209,6 +225,12 @@ namespace UI.Controllers
             {
                 _mockEmployeeRepository.EmployeeDel(id);
                 return Json(new { success = true, message = "Deleted Successfully" });
+            }
+            else
+            {
+                  Response.StatusCode = 404;
+                //return View("NotFound", id);
+                return RedirectToAction("NotFound", "Error", id);
             }
             return Json(new { success = false, message = "Something Went Wrong" });
         }

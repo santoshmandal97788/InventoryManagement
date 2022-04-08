@@ -102,6 +102,7 @@ namespace UI.Controllers
                     ListItemCategoryName = model.ListItemCategoryName
                 };
                 _mockListItemCategoryRepository.ListItemCategoryIns(listItemCategory);
+                TempData["message"] = "List Item Category Added Successfully.";
                 return RedirectToAction("Index", "ListItemCategory");
             }
             return View();
@@ -112,7 +113,7 @@ namespace UI.Controllers
             ListItemCategory listItemCategory = _mockListItemCategoryRepository.GetListItemCategory(id);
             if (listItemCategory == null)
             {
-                return View("NotFound", id);
+                return RedirectToAction("NotFound", "Error", id);
             }
             ListItemCategoryViewModel listItemCategoryViewModel = new ListItemCategoryViewModel
             {
@@ -136,6 +137,7 @@ namespace UI.Controllers
                 }
                 listItemCategory.ListItemCategoryName = model.ListItemCategoryName;
                 ListItemCategory updatedCategory = _mockListItemCategoryRepository.ListItemCategoryUpd(listItemCategory);
+                TempData["message"] = "ListItem  Category Updated Successfully";
                 return RedirectToAction("Index");
             }
             return View(model);
@@ -147,14 +149,14 @@ namespace UI.Controllers
             if (category == null)
             {
                 Response.StatusCode = 404;
-                return View("NotFound", id);
+                return RedirectToAction("NotFound", "Error", id);
             }
             ListItemCategoryViewModel listItemCategoryViewModel = new ListItemCategoryViewModel() { ListItemCategoryId = category.ListItemCategoryId, ListItemCategoryName = category.ListItemCategoryName };
             return View(listItemCategoryViewModel);
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        //[ValidateAntiForgeryToken] //On uncomment Error  400 on AJax Call Request
         public IActionResult Delete(int id)
         {
             var isListItemCategoryInUse = _mockListItemCategoryRepository.ListItemCategoryIsInUse(id);

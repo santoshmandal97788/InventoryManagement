@@ -111,6 +111,7 @@ namespace UI.Controllers
                     RoleName = model.RoleName
                 };
                 _mockRoleRepository.RoleIns(role);
+                TempData["message"] = "Role Added Successfully";
                 return RedirectToAction("Index", "Administration");
             }
             return View();
@@ -121,7 +122,8 @@ namespace UI.Controllers
             Role role = _mockRoleRepository.GetRole(id);
             if (role == null)
             {
-                return View("NotFound",id);
+                return RedirectToAction("NotFound", "Error", id);
+
             }
             RoleViewModel roleViewModel = new RoleViewModel
             {
@@ -144,6 +146,7 @@ namespace UI.Controllers
                 }
                 role.RoleName = model.RoleName;               
                 Role updatedRole = _mockRoleRepository.RoleUpd(role);
+                TempData["message"] = "Role Updated Successfully";
                 return RedirectToAction("Index");
             }
             return View(model);
@@ -155,7 +158,7 @@ namespace UI.Controllers
             if (role == null)
             {
                 Response.StatusCode = 404;
-                return View("NotFound", id);
+                return RedirectToAction("NotFound", "Error", id);
             }
             RoleViewModel roleViewModel = new RoleViewModel() { RoleId = role.RoleId, RoleName = role.RoleName };
             return View(roleViewModel);
@@ -169,6 +172,10 @@ namespace UI.Controllers
             {
                 _mockRoleRepository.RoleDel(id);
                 return Json(new { success = true, message = "Deleted Successfully" });
+            }
+            else
+            {
+                return RedirectToAction("NotFound", "Error", id);
             }
             return Json(new { success = false, message = "Something Went Wrong" });
         }
