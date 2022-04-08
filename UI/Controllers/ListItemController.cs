@@ -112,6 +112,7 @@ namespace UI.Controllers
                     ListItemName = model.ListItemName
                 };
                 _mockListItemRepository.ListItemIns(listItem);
+                TempData["message"] = "ListItem Added Successfully.";
                 return RedirectToAction("Index", "ListItem");
             }
             return View();
@@ -122,7 +123,7 @@ namespace UI.Controllers
             ListItem listItem = _mockListItemRepository.GetListItem(id);
             if (listItem == null)
             {
-                return View("NotFound", id);
+                return RedirectToAction("NotFound", "Error", id);
             }
             var categoryList = _mockListItemCategoryRepository.GetAllListItemCategory().Select(p => new SelectListItem
             {
@@ -155,6 +156,7 @@ namespace UI.Controllers
                 listItem.ListItemCategoryId = model.ListItemCategoryId;
                 listItem.ListItemName = model.ListItemName;
                 ListItem updatedListItem = _mockListItemRepository.ListItemUpd(listItem);
+                TempData["message"] = "ListItem Updated Successfully.";
                 return RedirectToAction("Index");
             }
             return View(model);
@@ -166,7 +168,7 @@ namespace UI.Controllers
             if (listItem == null)
             {
                 Response.StatusCode = 404;
-                return View("NotFound", id);
+                return RedirectToAction("NotFound", "Error", id);
             }
             ListItemViewModel listItemViewModel = new ListItemViewModel() { ListItemId = listItem.ListItemId, ListItemCategoryId = listItem.ListItemCategoryId, ListItemCategoryName= listItem.ListItemCategory.ListItemCategoryName, ListItemName= listItem.ListItemName };
             return View(listItemViewModel);

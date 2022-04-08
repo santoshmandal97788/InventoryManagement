@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace UI.ViewModel
 {
-    public class EmployeeViewModel
+    public class EmployeeEditViewModel
     {
         public int EmployeeId { get; set; }
         public int PersonId { get; set; }
@@ -22,21 +22,11 @@ namespace UI.ViewModel
         public string Email { get; set; }
 
         [Required(ErrorMessage = "Please Select Gender")]
-        public int  GenderId { get; set; }
+        public int GenderId { get; set; }
         public string? Gender { get; set; }
-
-        [Required(ErrorMessage = "Password is Required")]
-        [StringLength(15, MinimumLength = 5)]
-        public string? Password { get; set; }
-
-        [Required(ErrorMessage = "Confirm Password is required.")]
-        [Compare("Password", ErrorMessage = "Password and Confirm Password must match.")]
-        public string? ConfirmPassword { get; set; }
 
         [Required(ErrorMessage = "Please Select Role")]
         public int RoleId { get; set; }
         public string? RoleName { get; set; }
-        public string? FullName { get; set; }
-
     }
 }

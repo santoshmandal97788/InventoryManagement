@@ -19,14 +19,14 @@ $(document).ready(function () {
             {
                 "data": "roleId", "orderable": false, "render": function (data, type, row) {
                     var details = "Details&nbsp;View&nbsp;Of&nbsp;Role";
-                   /* if (row.roleName == "SuperAdmin") {*/
-
                     var url = "/Administration/Details/" + row.roleId;
                     var deleteUrl = "/Administration/Delete/" + row.roleId;
+                    if (row.roleName != "SuperAdmin") {
+                        return "<a onclick=showPopup('" + url + "','" + details + "')  class='btn btn-info btn-sm'><i class='fa fa-eye'></i> View</a><a href='/Administration/Edit/" + row.roleId + "'  class='btn btn-primary btn-sm' style='margin-left:5px' ><i class='far fa-edit'></i> Edit</a><a href='#' class='btn btn-danger btn-sm' style='margin-left:5px' onclick=deleteConfirm('" + deleteUrl + "'); ><i class='far fa-trash-alt'></i> Delete</a>";
 
-                    return "<a onclick=showPopup('" + url + "','" + details + "')  class='btn btn-info btn-sm'><i class='fa fa-eye'></i> View</a><a href='/Administration/Edit/" + row.roleId + "'  class='btn btn-primary btn-sm' style='margin-left:5px' ><i class='far fa-edit'></i> Edit</a><a href='#' class='btn btn-danger btn-sm' style='margin-left:5px' onclick=deleteConfirm('" + deleteUrl + "'); ><i class='far fa-trash-alt'></i> Delete</a>";
-
-                    //} 
+                    } else {
+                        return "<a onclick=showPopup('" + url + "','" + details + "')  class='btn btn-info btn-sm'><i class='fa fa-eye'></i> View</a>";
+                    }
                     
                 }
             },
@@ -128,8 +128,13 @@ $(document).ready(function () {
                     var details = "Details&nbsp;View&nbsp;Of&nbsp;Employee";
                     var url = "/Employee/Details/" + row.employeeId;
                     var deleteUrl = "/Employee/Delete/" + row.employeeId;
+                    if (row.roleName != "SuperAdmin") {
+                        return "<a onclick=showPopup('" + url + "','" + details + "')  class='btn btn-info btn-sm'><i class='fa fa-eye'></i> View</a><a href='/Employee/Edit/" + row.roleId + "'  class='btn btn-primary btn-sm' style='margin-left:5px' ><i class='far fa-edit'></i> Edit</a><a href='#' class='btn btn-danger btn-sm' style='margin-left:5px' onclick=deleteConfirm('" + deleteUrl + "'); ><i class='far fa-trash-alt'></i> Delete</a>";
 
-                    return "<a onclick=showPopup('" + url + "','" + details + "')  class='btn btn-info btn-sm'><i class='fa fa-eye'></i> View</a><a href='/Employee/Edit/" + row.employeeId + "'  class='btn btn-primary btn-sm' style='margin-left:5px' ><i class='far fa-edit'></i> Edit</a><a href='#' class='btn btn-danger btn-sm' style='margin-left:5px' onclick=deleteConfirm('" + deleteUrl + "'); ><i class='far fa-trash-alt'></i> Delete</a>";
+                    } else {
+                        return "<a onclick=showPopup('" + url + "','" + details + "')  class='btn btn-info btn-sm'><i class='fa fa-eye'></i> View</a>";
+                    }
+                    //return "<a onclick=showPopup('" + url + "','" + details + "')  class='btn btn-info btn-sm'><i class='fa fa-eye'></i> View</a><a href='/Employee/Edit/" + row.employeeId + "'  class='btn btn-primary btn-sm' style='margin-left:5px' ><i class='far fa-edit'></i> Edit</a><a href='#' class='btn btn-danger btn-sm' style='margin-left:5px' onclick=deleteConfirm('" + deleteUrl + "'); ><i class='far fa-trash-alt'></i> Delete</a>";
 
                 }
             },
