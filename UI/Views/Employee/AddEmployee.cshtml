@@ -1,0 +1,76 @@
+﻿
+@model UI.ViewModel.EmployeeViewModel;
+
+@{
+    ViewBag.Title = "Add Employee";
+}
+ <div class="row  justify-content-center">
+     <div class="col-md-10">
+              <!-- general form elements -->
+            <div class="card card-primary">
+              <div class="card-header">
+                <h3 class="card-title">Add Employee Form</h3>
+              </div>
+              <!-- /.card-header -->
+              <!-- form start -->
+              <form asp-action="AddEmployee" asp-controller="Employee">
+                <div class="card-body">
+                    <div class="row">
+                       <div class="form-group col-md-4">
+                            <label class="control-label">First Name</label>
+                             <input asp-for="FirstName" type="text" class="form-control"  placeholder="Enter First Name">
+                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                        </div>           
+                         <div class="form-group col-md-4">
+                            <label class="control-label">Middle Name</label>
+                             <input asp-for="MiddleName" type="text" class="form-control"  placeholder="Enter Middle Name">
+                            <span asp-validation-for="MiddleName" class="text-danger"></span>
+                        </div>  
+                          <div class="form-group col-md-4">
+                            <label class="control-label">last Name</label>
+                             <input asp-for="LastName" type="text" class="form-control"  placeholder="Enter Last Name">
+                            <span asp-validation-for="LastName" class="text-danger"></span>
+                        </div>  
+                     </div>
+
+                     <div class="row">
+                       <div class="form-group col-md-6">
+                            <label class="control-label">Email</label>
+                             <input asp-for="Email" type="text" class="form-control"  placeholder="Enter Email">
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>           
+                       <div class="form-group col-md-6">
+                            <label class="control-label">Gender</label>
+                                <select class="form-control search selection mr-sm-2" asp-for="GenderId" asp-items="@ViewBag.Gender">
+                                    <option value="@null">Select Gender</option>
+                                </select>
+                            <span asp-validation-for="GenderId" class="text-danger"></span>
+                        </div>      
+                     </div>
+                        <div class="row">
+                       <div class="form-group col-md-6">
+                            <label class="control-label">Password</label>
+                             <input asp-for="Password" type="password" class="form-control"  placeholder="Enter Password">
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>           
+                       <div class="form-group col-md-6">
+                            <label class="control-label">Confirm Password</label>
+                            <input asp-for="ConfirmPassword" type="password" class="form-control"  placeholder="Confirm Password">
+                            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                        </div>      
+                     </div>
+
+                      
+                </div>
+                <!-- /.card-body -->
+
+                <div class="card-footer">
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+              </form>
+            </div>
+            <!-- /.card -->
+    </div>
+
+</div>
+          

@@ -1,0 +1,51 @@
+﻿@model UI.ViewModel.ListItemViewModel;
+
+@{
+    ViewBag.Title = "Add ListItem";
+}
+ <div class="row  justify-content-center">
+     <div class="col-md-6">
+              <!-- general form elements -->
+            <div class="card card-primary">
+              <div class="card-header">
+                <h3 class="card-title">Add ListItem Form</h3>
+              </div>
+              <!-- /.card-header -->
+              <!-- form start -->
+              <form asp-action="AddListItem" asp-controller="ListItem">
+                <div class="card-body">
+                    <div class="row">
+                          <div class="form-group col-md-6">
+                            <label class="control-label">Category</label>
+                                <select class="form-control search selection mr-sm-2" asp-for="ListItemCategoryId" asp-items="@ViewBag.Category">
+                                    <option value="@null">Select Category</option>
+                                </select>
+                            <span asp-validation-for="ListItemCategoryId" class="text-danger"></span>
+                        </div>      
+                         <div class="form-group col-md-6">
+                            <label class="control-label">ListItem Name</label>
+                             <input asp-for="ListItemName" type="text" class="form-control" id="exampleInputEmail1" placeholder="Enter ListItem Name">
+                            <span asp-validation-for="ListItemName" class="text-danger"></span>
+                        </div>              
+                 </div>
+
+
+
+                @*  <div class="form-group">
+                    <label for="exampleInputEmail1">ListItem Name</label>
+                    <input asp-for="ListItemName" type="text" class="form-control" id="exampleInputEmail1" placeholder="Enter ListItem Name">
+                    <span asp-validation-for="ListItemName" class="text-danger"></span>
+                  </div>    *@          
+                </div>
+                <!-- /.card-body -->
+
+                <div class="card-footer">
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+              </form>
+            </div>
+            <!-- /.card -->
+    </div>
+
+</div>
+          

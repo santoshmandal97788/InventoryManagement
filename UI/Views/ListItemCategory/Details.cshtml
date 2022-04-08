@@ -1,0 +1,25 @@
+﻿@model UI.ViewModel.ListItemCategoryViewModel
+@{
+      ViewData["Title"] = "Details";
+      Layout = null;
+}
+
+<div class="row">
+    <div class="col-md-12">
+             <div class="row form-group">
+             <div class="col-sm-4">
+                <label class="control-label">Category Name</label>
+            </div>
+             <div class="col-sm-8">
+                <label class="control-label">: @Model.ListItemCategoryName</label>
+            </div>
+        </div>
+          
+       
+            <div class="modal-footer" style="padding:0px !important;">
+                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+    </div>
+</div>
+
+   

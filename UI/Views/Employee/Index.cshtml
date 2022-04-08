@@ -1,0 +1,47 @@
+﻿
+@{
+    ViewData["Title"] = "Index";
+}
+
+       <a asp-action="AddEmployee" asp-controller="Employee" class="btn btn-primary" style="margin-bottom:10px;"><i class="fas fa-plus"></i> Add New Employee</a>
+
+   <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+           
+            <div class="card card-secondary">
+              <div class="card-header">
+                <h3 class="card-title">Employee List</h3>
+              </div>
+              <!-- /.card-header -->
+              <div class="card-body">
+                <table id="employeeDataTable" class="table table-bordered  table-striped">
+                  <thead>
+                  <tr>
+                     <th>Employee Id</th>
+                     <th>Person Id</th>
+                     <th>Employee Name</th>
+                    <th>Email</th>
+                    <th>Gender</th>
+                    <th>Role</th>
+                    <th>Action</th>
+                  </tr>
+                  </thead>
+                </table>
+              </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+
+
+

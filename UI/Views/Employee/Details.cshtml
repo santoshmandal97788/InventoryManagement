@@ -1,0 +1,49 @@
+﻿@model UI.ViewModel.EmployeeViewModel
+@{
+      ViewData["Title"] = "Details";
+      Layout = null;
+}
+
+<div class="row">
+    <div class="col-md-12">
+             <div class="row form-group">
+                 <div class="col-sm-4">
+                    <label class="control-label">Employee Name</label>
+                </div>
+                 <div class="col-sm-8">
+                    <label class="control-label">: @Model.FullName </label>
+                </div>
+             </div>
+              <div class="row form-group">
+                 <div class="col-sm-4">
+                    <label class="control-label">Email</label>
+                </div>
+                 <div class="col-sm-8">
+                    <label class="control-label">: @Model.Email</label>
+                </div>
+             </div>
+               <div class="row form-group">
+                 <div class="col-sm-4">
+                    <label class="control-label">Gender</label>
+                </div>
+                 <div class="col-sm-8">
+                    <label class="control-label">: @Model.Gender</label>
+                </div>
+             </div>
+              <div class="row form-group">
+                 <div class="col-sm-4">
+                    <label class="control-label">Role</label>
+                </div>
+                 <div class="col-sm-8">
+                    <label class="control-label">: @Model.RoleName</label>
+                </div>
+             </div>
+          
+       
+            <div class="modal-footer" style="padding:0px !important;">
+                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+    </div>
+</div>
+
+   
