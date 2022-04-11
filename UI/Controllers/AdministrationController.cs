@@ -122,7 +122,9 @@ namespace UI.Controllers
             Role role = _mockRoleRepository.GetRole(id);
             if (role == null)
             {
-                return RedirectToAction("NotFound", "Error", id);
+                string msg = $"Role with id: {id}, cannot be found";
+                TempData["errMessage"] = msg;
+                return RedirectToAction("NotFound", "Error");
 
             }
             RoleViewModel roleViewModel = new RoleViewModel
@@ -158,7 +160,9 @@ namespace UI.Controllers
             if (role == null)
             {
                 Response.StatusCode = 404;
-                return RedirectToAction("NotFound", "Error", id);
+                string msg = $"Role with id: {id}, cannot be found";
+                TempData["errMessage"] = msg;
+                return RedirectToAction("NotFound", "Error");
             }
             RoleViewModel roleViewModel = new RoleViewModel() { RoleId = role.RoleId, RoleName = role.RoleName };
             return View(roleViewModel);
@@ -175,7 +179,9 @@ namespace UI.Controllers
             }
             else
             {
-                return RedirectToAction("NotFound", "Error", id);
+                string msg = $"Role with id: {id}, you are looking cannot be found";
+                TempData["errMessage"] = msg;
+                return RedirectToAction("NotFound", "Error");
             }
             return Json(new { success = false, message = "Something Went Wrong" });
         }

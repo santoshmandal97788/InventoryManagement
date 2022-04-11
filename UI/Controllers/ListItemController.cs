@@ -6,7 +6,7 @@ using UI.Services;
 using UI.ViewModel;
 
 namespace UI.Controllers
-{
+{ 
     [Authorize(Roles = "Admin, SuperAdmin")]
     public class ListItemController : Controller
     {
@@ -123,7 +123,9 @@ namespace UI.Controllers
             ListItem listItem = _mockListItemRepository.GetListItem(id);
             if (listItem == null)
             {
-                return RedirectToAction("NotFound", "Error", id);
+                string msg = $"ListItem with id: {id}, cannot be found";
+                TempData["errMessage"] = msg;
+                return RedirectToAction("NotFound", "Error");
             }
             var categoryList = _mockListItemCategoryRepository.GetAllListItemCategory().Select(p => new SelectListItem
             {
@@ -168,7 +170,9 @@ namespace UI.Controllers
             if (listItem == null)
             {
                 Response.StatusCode = 404;
-                return RedirectToAction("NotFound", "Error", id);
+                string msg = $"ListItem with id: {id}, cannot be found";
+                TempData["errMessage"] = msg;
+                return RedirectToAction("NotFound", "Error");
             }
             ListItemViewModel listItemViewModel = new ListItemViewModel() { ListItemId = listItem.ListItemId, ListItemCategoryId = listItem.ListItemCategoryId, ListItemCategoryName= listItem.ListItemCategory.ListItemCategoryName, ListItemName= listItem.ListItemName };
             return View(listItemViewModel);

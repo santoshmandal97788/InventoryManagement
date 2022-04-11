@@ -113,7 +113,9 @@ namespace UI.Controllers
             ListItemCategory listItemCategory = _mockListItemCategoryRepository.GetListItemCategory(id);
             if (listItemCategory == null)
             {
-                return RedirectToAction("NotFound", "Error", id);
+                string msg = $"ListItemCategory with id: {id}, you are looking cannot be found";
+                TempData["errMessage"] = msg;
+                return RedirectToAction("NotFound", "Error");
             }
             ListItemCategoryViewModel listItemCategoryViewModel = new ListItemCategoryViewModel
             {
@@ -149,7 +151,9 @@ namespace UI.Controllers
             if (category == null)
             {
                 Response.StatusCode = 404;
-                return RedirectToAction("NotFound", "Error", id);
+                string msg = $"ListItemCategory with id: {id}, cannot be found";
+                TempData["errMessage"] = msg;
+                return RedirectToAction("NotFound", "Error");
             }
             ListItemCategoryViewModel listItemCategoryViewModel = new ListItemCategoryViewModel() { ListItemCategoryId = category.ListItemCategoryId, ListItemCategoryName = category.ListItemCategoryName };
             return View(listItemCategoryViewModel);

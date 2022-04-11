@@ -141,7 +141,9 @@ namespace UI.Controllers
             Employee employee = _mockEmployeeRepository.GetEmployee(id);
             if (employee == null)
             {
-                return RedirectToAction("NotFound", "Error", id);
+                string  msg= $"Employee with id: {id}, you are looking cannot be found";
+                TempData["errMessage"] = msg;
+                return RedirectToAction("NotFound", "Error");
             }
             var genderList = _mockListItemRepository.GetAllListItemById(1).Select(p => new SelectListItem
             {
@@ -208,8 +210,9 @@ namespace UI.Controllers
             if (employee == null)
             {
                 Response.StatusCode = 404;
-                //return View("NotFound", id);
-                return RedirectToAction("NotFound", "Error", id);
+                string msg = $"Employee with id: {id}, you are looking cannot be found";
+                TempData["errMessage"] = msg;
+                return RedirectToAction("NotFound", "Error");
             }
            // EmployeeViewModel employeeViewModel = new EmployeeViewModel() { EmployeeId = employee.EmployeeId, PersonId = employee.PersonId, FirstName = employee.Person.FirstName, MiddleName= employee.Person.MiddleName, LastName= employee.Person.LastName, Gender= employee.Person.ListItem.ListItemName, Email= employee.Email, RoleId= employee.RoleId, RoleName= employee.Role.RoleName};
             return View(employee);
@@ -229,8 +232,9 @@ namespace UI.Controllers
             else
             {
                   Response.StatusCode = 404;
-                //return View("NotFound", id);
-                return RedirectToAction("NotFound", "Error", id);
+                string msg = $"Employee with id: {id}, you are looking cannot be found";
+                TempData["errMessage"] = msg;
+                return RedirectToAction("NotFound", "Error");
             }
             return Json(new { success = false, message = "Something Went Wrong" });
         }
