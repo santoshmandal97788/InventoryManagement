@@ -6,6 +6,7 @@ namespace UI.ViewModel
     public class EmployeeViewModel
     {
         public int EmployeeId { get; set; }
+        public string? EncryptedId { get; set; }
         public int PersonId { get; set; }
 
         [Required(ErrorMessage = "First Name is Required")]

@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using UI.Models;
+using UI.Security;
 using UI.Services;
 using UI.ViewModel;
 
@@ -12,12 +14,13 @@ namespace UI.Controllers
     {
         private readonly IListItemRepository _mockListItemRepository;
         private readonly IListItemCategoryRepository _mockListItemCategoryRepository;
-       
+        private readonly IDataProtector protector;
 
-        public ListItemController(IListItemRepository mockListItemRepository, IListItemCategoryRepository mockListItemCategoryRepository)
+        public ListItemController(IListItemRepository mockListItemRepository, IListItemCategoryRepository mockListItemCategoryRepository, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings)
         {
             _mockListItemRepository = mockListItemRepository;
             _mockListItemCategoryRepository = mockListItemCategoryRepository;
+            protector = dataProtectionProvider.CreateProtector(dataProtectionPurposeStrings.IdRouteValue);
         }
 
         [AcceptVerbs("Get", "Post")]
@@ -118,9 +121,10 @@ namespace UI.Controllers
             return View();
         }
         [HttpGet]
-        public IActionResult Edit(int id)
+        public IActionResult Edit(string id)
         {
-            ListItem listItem = _mockListItemRepository.GetListItem(id);
+            int listItemId = Convert.ToInt32(protector.Unprotect(id));
+            ListItem listItem = _mockListItemRepository.GetListItem(listItemId);
             if (listItem == null)
             {
                 string msg = $"ListItem with id: {id}, cannot be found";
@@ -164,9 +168,10 @@ namespace UI.Controllers
             return View(model);
         }
         [HttpGet]
-        public IActionResult Details(int id)
+        public IActionResult Details(string id)
         {
-            var listItem = _mockListItemRepository.GetListItem(id);
+            int listItemId = Convert.ToInt32(protector.Unprotect(id));
+            var listItem = _mockListItemRepository.GetListItem(listItemId);
             if (listItem == null)
             {
                 Response.StatusCode = 404;
@@ -180,17 +185,18 @@ namespace UI.Controllers
 
         [HttpPost]
         //[ValidateAntiForgeryToken]
-        public IActionResult Delete(int id)
+        public IActionResult Delete(string id)
         {
-            var isListItemInUse = _mockListItemRepository.ListItemAssignToPerson(id);
+            int listItemId = Convert.ToInt32(protector.Unprotect(id));
+            var isListItemInUse = _mockListItemRepository.ListItemAssignToPerson(listItemId);
             if (isListItemInUse)
             {
                 return Json(new { success = false, message = " Can not Delete! List Item Is in Use." });
             }
-            ListItem listItemToDelete = _mockListItemRepository.GetListItem(id);
+            ListItem listItemToDelete = _mockListItemRepository.GetListItem(listItemId);
             if (listItemToDelete != null)
             {
-                _mockListItemRepository.ListItemDel(id);
+                _mockListItemRepository.ListItemDel(listItemId);
                 return Json(new { success = true, message = "Deleted Successfully" });
             }
             return Json(new { success = false, message = "Something Went Wrong" });
