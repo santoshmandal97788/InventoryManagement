@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace UI.Models
 {
@@ -8,6 +9,9 @@ namespace UI.Models
     {
         [Key]
         public int ListItemCategoryId { get; set; }
+
+        [NotMapped]
+        public string EncryptedId { get; set; }
         public string ListItemCategoryName { get; set; }
         
 

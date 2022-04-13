@@ -1,17 +1,23 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Mvc;
 using UI.Data;
 using UI.Models;
+using UI.Security;
 
 namespace UI.Services
 {
     public class MockListItemCategoryRepository : IListItemCategoryRepository
     {
         private readonly AppDbContext _appDbContext;
+        private readonly IDataProtector protector;
 
-        public MockListItemCategoryRepository(AppDbContext appDbContext)
+        public MockListItemCategoryRepository(AppDbContext appDbContext, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings)
         {
             _appDbContext = appDbContext;
+            protector = dataProtectionProvider.CreateProtector(dataProtectionPurposeStrings.IdRouteValue);
         }
+
+
         #region ------Get ALl listItem Category---------
         public IEnumerable<ListItemCategory> GetAllListItemCategory()
         {
@@ -87,7 +93,12 @@ namespace UI.Services
         {
             int recordsTotal = 0;
             List<ListItemCategory> listItemCategory= new List<ListItemCategory>();
-            listItemCategory = (from cat in _appDbContext.ListItemCategories select cat).Skip(skip).Take(pageSize).ToList();
+            listItemCategory = (from cat in _appDbContext.ListItemCategories
+                                select new ListItemCategory
+                                {
+                                    EncryptedId = protector.Protect(cat.ListItemCategoryId.ToString()),
+                                    ListItemCategoryName = cat.ListItemCategoryName,
+                                }).Skip(skip).Take(pageSize).ToList();
             //roleList = _appDbContext.Roles.Skip(skip).Take(pageSize).ToList();
             if (!(string.IsNullOrEmpty(sortColumn) && string.IsNullOrEmpty(sortColumnDirection)))
             {

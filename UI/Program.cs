@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Configuration;
 using UI.Data;
+using UI.Security;
 using UI.Services;
 using UI.Services.IService;
 using UI.Services.MockService;
@@ -28,6 +29,7 @@ builder.Services.AddScoped<IEmployeeRepository, MockEmployeeRepository>();
 builder.Services.AddScoped<IPersonRepository, MockPersonRepository>();
 builder.Services.AddScoped<IEmployeeRepository, MockEmployeeRepository>();
 //builder.Services.Configure<MailSettings>(("MailSettings"));
+builder.Services.AddSingleton<DataProtectionPurposeStrings>();
 builder.Configuration.GetSection("MailSettings");
 builder.Services.AddTransient<IMailService, MailService>();
 

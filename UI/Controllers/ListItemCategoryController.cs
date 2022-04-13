@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using UI.Models;
+using UI.Security;
 using UI.Services;
 using UI.ViewModel;
 
@@ -10,10 +12,12 @@ namespace UI.Controllers
     public class ListItemCategoryController : Controller
     {
         private readonly IListItemCategoryRepository _mockListItemCategoryRepository;
+        private readonly IDataProtector protector;
 
-        public ListItemCategoryController(IListItemCategoryRepository mockListItemCategoryRepository)
+        public ListItemCategoryController(IListItemCategoryRepository mockListItemCategoryRepository, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings)
         {
             _mockListItemCategoryRepository = mockListItemCategoryRepository;
+            protector = dataProtectionProvider.CreateProtector(dataProtectionPurposeStrings.IdRouteValue);
         }
 
         [AcceptVerbs("Get", "Post")]
@@ -108,9 +112,10 @@ namespace UI.Controllers
             return View();
         }
         [HttpGet]
-        public IActionResult Edit(int id)
+        public IActionResult Edit(string id)
         {
-            ListItemCategory listItemCategory = _mockListItemCategoryRepository.GetListItemCategory(id);
+            int listItemCategoryId = Convert.ToInt32(protector.Unprotect(id));
+            ListItemCategory listItemCategory = _mockListItemCategoryRepository.GetListItemCategory(listItemCategoryId);
             if (listItemCategory == null)
             {
                 string msg = $"ListItemCategory with id: {id}, you are looking cannot be found";
@@ -145,9 +150,10 @@ namespace UI.Controllers
             return View(model);
         }
         [HttpGet]
-        public IActionResult Details(int id)
+        public IActionResult Details(string id)
         {
-            var category = _mockListItemCategoryRepository.GetListItemCategory(id);
+            int listItemCategoryId = Convert.ToInt32(protector.Unprotect(id));
+            var category = _mockListItemCategoryRepository.GetListItemCategory(listItemCategoryId);
             if (category == null)
             {
                 Response.StatusCode = 404;
@@ -161,17 +167,18 @@ namespace UI.Controllers
 
         [HttpPost]
         //[ValidateAntiForgeryToken] //On uncomment Error  400 on AJax Call Request
-        public IActionResult Delete(int id)
+        public IActionResult Delete(string id)
         {
-            var isListItemCategoryInUse = _mockListItemCategoryRepository.ListItemCategoryIsInUse(id);
+            int listItemCategoryId = Convert.ToInt32(protector.Unprotect(id));
+            var isListItemCategoryInUse = _mockListItemCategoryRepository.ListItemCategoryIsInUse(listItemCategoryId);
             if (isListItemCategoryInUse)
             {
                 return Json(new { success = false, message = " Can not Delete! Category Is in Use." });
             }
-            ListItemCategory categoryToDelete = _mockListItemCategoryRepository.GetListItemCategory(id);
+            ListItemCategory categoryToDelete = _mockListItemCategoryRepository.GetListItemCategory(listItemCategoryId);
             if (categoryToDelete != null)
             {
-                _mockListItemCategoryRepository.ListItemCategoryDel(id);
+                _mockListItemCategoryRepository.ListItemCategoryDel(listItemCategoryId);
                 return Json(new { success = true, message = "Deleted Successfully" });
             }
             return Json(new { success = false, message = "Something Went Wrong" });

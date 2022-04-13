@@ -1,16 +1,20 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Mvc;
 using UI.Data;
 using UI.Models;
+using UI.Security;
 
 namespace UI.Services
 {
     public class MockRoleRepository : IRoleRepository
     {
         private readonly AppDbContext _appDbContext;
+        private readonly IDataProtector protector;
 
-        public MockRoleRepository(AppDbContext appDbContext)
+        public MockRoleRepository(AppDbContext appDbContext, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings)
         {
             _appDbContext = appDbContext;
+            protector = dataProtectionProvider.CreateProtector(dataProtectionPurposeStrings.IdRouteValue);
         }
         #region ------Get All Roles List------
         public IEnumerable<Role> GetAllRoles()
@@ -90,7 +94,12 @@ namespace UI.Services
         {
             int recordsTotal = 0;
             List<Role> roleList = new List<Role>();
-            roleList= (from role in _appDbContext.Roles select role).Skip(skip).Take(pageSize).ToList();
+            roleList= (from role in _appDbContext.Roles select new Role
+            {
+                EncryptedId = protector.Protect(role.RoleId.ToString()),
+               // RoleId = role.RoleId,
+                RoleName = role.RoleName,
+            }).Skip(skip).Take(pageSize).ToList();
             //roleList = _appDbContext.Roles.Skip(skip).Take(pageSize).ToList();
             if (!(string.IsNullOrEmpty(sortColumn) && string.IsNullOrEmpty(sortColumnDirection)))
             {

@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using UI.Models;
+using UI.Security;
 using UI.Services;
 using UI.ViewModel;
 
@@ -10,10 +12,12 @@ namespace UI.Controllers
     public class AdministrationController : Controller
     {
         private readonly IRoleRepository _mockRoleRepository;
+        private readonly IDataProtector protector;
 
-        public AdministrationController(IRoleRepository mockRoleRepository)
+        public AdministrationController(IRoleRepository mockRoleRepository, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings)
         {
             _mockRoleRepository = mockRoleRepository;
+            protector = dataProtectionProvider.CreateProtector(dataProtectionPurposeStrings.IdRouteValue);
         }
 
         [AcceptVerbs("Get", "Post")]
@@ -79,6 +83,7 @@ namespace UI.Controllers
                 int pageSize = length != null ? Convert.ToInt32(length) : 0;
                 int skip = start != null ? Convert.ToInt32(start) : 0;
                 var jsonData = _mockRoleRepository.GetRolesForDataTable(draw, start, length, sortColumn, sortColumnDirection, searchValue, pageSize, skip);
+                
                 return Ok(jsonData.Value);
             }
             catch (Exception ex)
@@ -117,9 +122,10 @@ namespace UI.Controllers
             return View();
         }
         [HttpGet]
-        public IActionResult Edit(int id)
+        public IActionResult Edit(string id)
         {
-            Role role = _mockRoleRepository.GetRole(id);
+            int roleId = Convert.ToInt32(protector.Unprotect(id)); 
+            Role role = _mockRoleRepository.GetRole(roleId);
             if (role == null)
             {
                 string msg = $"Role with id: {id}, cannot be found";
@@ -154,9 +160,10 @@ namespace UI.Controllers
             return View(model);
         }
         [HttpGet]
-        public IActionResult Details(int id)
+        public IActionResult Details(string id)
         {
-            var role = _mockRoleRepository.GetRole(id);
+            int roleId = Convert.ToInt32(protector.Unprotect(id));
+            var role = _mockRoleRepository.GetRole(roleId);
             if (role == null)
             {
                 Response.StatusCode = 404;
@@ -169,18 +176,19 @@ namespace UI.Controllers
         }
 
         [HttpPost]
-        public IActionResult Delete(int id)
+        public IActionResult Delete(string id)
         {
-            Role roleToDelete = _mockRoleRepository.GetRole(id);
+            int roleId = Convert.ToInt32(protector.Unprotect(id));
+            Role roleToDelete = _mockRoleRepository.GetRole(roleId);
             if (roleToDelete != null)
             {
-                _mockRoleRepository.RoleDel(id);
+                _mockRoleRepository.RoleDel(roleId);
                 return Json(new { success = true, message = "Deleted Successfully" });
             }
             else
             {
                 string msg = $"Role with id: {id}, you are looking cannot be found";
-                TempData["errMessage"] = msg;
+                TempData["errMessage"] = msg; 
                 return RedirectToAction("NotFound", "Error");
             }
             return Json(new { success = false, message = "Something Went Wrong" });

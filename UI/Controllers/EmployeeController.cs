@@ -1,6 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using UI.Models;
+using UI.Security;
 using UI.Services;
 using UI.Services.IService;
 using UI.ViewModel;
@@ -13,13 +16,21 @@ namespace UI.Controllers
         private readonly IPersonRepository _mockPersonRepository;
         private readonly IListItemRepository _mockListItemRepository;
         private readonly IRoleRepository _mockRoleRepository;
+        private readonly IDataProtector protector;
 
-        public EmployeeController(IEmployeeRepository mockEmployeeRepository,IListItemRepository mockListItemRepository, IPersonRepository mockPersonRepository, IRoleRepository mockRoleRepository)
+
+        public EmployeeController(IEmployeeRepository mockEmployeeRepository,
+                                    IListItemRepository mockListItemRepository,
+                                    IPersonRepository mockPersonRepository,
+                                    IRoleRepository mockRoleRepository,
+                                    IDataProtectionProvider dataProtectionProvider,
+                                    DataProtectionPurposeStrings dataProtectionPurposeStrings)
         {
             _mockEmployeeRepository = mockEmployeeRepository;
             _mockPersonRepository = mockPersonRepository;
             _mockListItemRepository = mockListItemRepository;
             _mockRoleRepository = mockRoleRepository;
+            protector = dataProtectionProvider.CreateProtector(dataProtectionPurposeStrings.IdRouteValue);
         }
         [AcceptVerbs("Get", "Post")]
         public IActionResult IsEmailExists(string email, int employeeId)
@@ -54,11 +65,13 @@ namespace UI.Controllers
 
         }
         [HttpGet]
+        [Authorize]
         public IActionResult Index()
         {
             return View();
         }
         [HttpPost]
+        [Authorize]
         //[ValidateAntiForgeryToken]
         public IActionResult GetAllEmployees()
         {
@@ -135,10 +148,13 @@ namespace UI.Controllers
             return View(model);
         }
         [HttpGet]
-        public IActionResult Edit(int id)
+        [Authorize]
+        public IActionResult Edit(string id)
         
         {
-            Employee employee = _mockEmployeeRepository.GetEmployee(id);
+
+            int employeeId = Convert.ToInt32(protector.Unprotect(id));
+            Employee employee = _mockEmployeeRepository.GetEmployee(employeeId);
             if (employee == null)
             {
                 string  msg= $"Employee with id: {id}, you are looking cannot be found";
@@ -174,6 +190,7 @@ namespace UI.Controllers
             return View(employeeViewModel);
         }
         [HttpPost]
+        [Authorize]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(EmployeeEditViewModel model)
         {
@@ -204,9 +221,12 @@ namespace UI.Controllers
         }
 
         [HttpGet]
-        public IActionResult Details(int id)
+        [Authorize]
+        public IActionResult Details(string id)
         {
-            var employee = _mockEmployeeRepository.GetEmployeeDetails(id);
+
+            int employeeId = Convert.ToInt32(protector.Unprotect(id));
+            var employee = _mockEmployeeRepository.GetEmployeeDetails(employeeId);
             if (employee == null)
             {
                 Response.StatusCode = 404;
@@ -220,13 +240,14 @@ namespace UI.Controllers
         }
 
         [HttpPost]
-        public IActionResult Delete(int id)
+        [Authorize]
+        public IActionResult Delete(string id)
         {
-           
-            Employee employeeToDelete = _mockEmployeeRepository.GetEmployee(id);
+            int employeeId = Convert.ToInt32(protector.Unprotect(id));
+            Employee employeeToDelete = _mockEmployeeRepository.GetEmployee(employeeId);
             if (employeeToDelete != null)
             {
-                _mockEmployeeRepository.EmployeeDel(id);
+                _mockEmployeeRepository.EmployeeDel(employeeId);
                 return Json(new { success = true, message = "Deleted Successfully" });
             }
             else

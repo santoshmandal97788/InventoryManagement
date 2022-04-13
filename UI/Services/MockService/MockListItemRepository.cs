@@ -1,16 +1,20 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Mvc;
 using UI.Data;
 using UI.Models;
+using UI.Security;
 
 namespace UI.Services
 {
     public class MockListItemRepository : IListItemRepository
     {
         private readonly AppDbContext _appDbContext;
+        private readonly IDataProtector protector;
 
-        public MockListItemRepository(AppDbContext appDbContext)
+        public MockListItemRepository(AppDbContext appDbContext,  IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings)
         {
             _appDbContext = appDbContext;
+            protector = dataProtectionProvider.CreateProtector(dataProtectionPurposeStrings.IdRouteValue);
         }
         #region -----Get List of ListItem-------
         public IEnumerable<ListItem> GetAllListItem()
@@ -113,7 +117,7 @@ namespace UI.Services
             listItems = (from lstItem in _appDbContext.ListItems join category in _appDbContext.ListItemCategories on lstItem.ListItemCategoryId equals category.ListItemCategoryId
                          select new ListItem
                          {
-                             ListItemId = lstItem.ListItemId,
+                             EncryptedId = protector.Protect(lstItem.ListItemId.ToString()),
                              ListItemCategory = category,
                              ListItemCategoryId= lstItem.ListItemCategoryId,
                              ListItemName = lstItem.ListItemName

@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Mvc;
 using UI.Data;
 using UI.Models;
+using UI.Security;
 using UI.Services.IService;
 using UI.ViewModel;
 
@@ -10,11 +12,13 @@ namespace UI.Services.MockService
     {
         private readonly AppDbContext _appDbContext;
         private readonly IMailService _mailService;
+        private readonly IDataProtector protector;
 
-        public MockEmployeeRepository(AppDbContext appDbContext, IMailService mailService)
+        public MockEmployeeRepository(AppDbContext appDbContext, IMailService mailService, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings)
         {
             _appDbContext = appDbContext;
             _mailService = mailService;
+            protector = dataProtectionProvider.CreateProtector(dataProtectionPurposeStrings.IdRouteValue);
         }
         public void EmployeeDel(int id)
         {
@@ -160,8 +164,10 @@ namespace UI.Services.MockService
                          join role in _appDbContext.Roles on emp.RoleId equals role.RoleId
                          select new EmployeeViewModel
                          {
-                             EmployeeId = emp.EmployeeId,
-                             PersonId = emp.PersonId,
+                             //EmployeeId = emp.EmployeeId,
+                             EncryptedId = protector.Protect(emp.EmployeeId.ToString()),
+                             //PersonId = emp.PersonId,
+                             //EncryptedPersonId = protector.Protect(emp.PersonId.ToString()),
                              Email = emp.Email,
                              RoleName = role.RoleName,
                              FirstName = person.FirstName,
