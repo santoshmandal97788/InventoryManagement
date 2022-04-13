@@ -167,7 +167,6 @@ namespace UI.Services.MockService
                              //EmployeeId = emp.EmployeeId,
                              EncryptedId = protector.Protect(emp.EmployeeId.ToString()),
                              //PersonId = emp.PersonId,
-                             //EncryptedPersonId = protector.Protect(emp.PersonId.ToString()),
                              Email = emp.Email,
                              RoleName = role.RoleName,
                              FirstName = person.FirstName,

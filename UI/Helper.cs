@@ -1,10 +1,13 @@
 ﻿using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System.Security.Cryptography;
+using UI.Data;
+using UI.Services;
 
 namespace UI
 {
     public static class Helper
     {
+        
         public static string HashPassword(string password)
         {
             // generate a 128-bit salt using a cryptographically strong random sequence of nonzero values
@@ -35,6 +38,6 @@ namespace UI
                 chars[i] = _allowedChars[(int)((_allowedChars.Length) * randNum.NextDouble())];
             }
             return new string(chars);
-        }
+        }       
     }
 }
