@@ -30,10 +30,10 @@ namespace UI.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public IActionResult Login()
+        public IActionResult Login(string returnUrl)
         {
-              //ViewBag.Message = TempData["message"];  
-               return View();
+            ViewData["ReturnUrl"] = returnUrl;
+            return View();
         }
 
         [HttpPost]
@@ -80,12 +80,12 @@ namespace UI.Controllers
                 }
                 else
                 {
-                    return RedirectToAction("Index", "Administration");
+                    return RedirectToAction("Index", "Home");
                 }
             }
 
             // Something failed. Redisplay the form.
-            return View();
+            return View(model);
         }
 
         [HttpPost]

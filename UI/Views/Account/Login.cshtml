@@ -2,6 +2,8 @@
 @{
     ViewData["Title"] = "Login";
     Layout = null;
+     //var returnUrl = ViewData["ReturnUrl"] as string;
+     //returnUrl = System.Net.WebUtility.UrlEncode(returnUrl);
     
 }
 <!DOCTYPE html>
@@ -44,7 +46,7 @@
     </div>
     <div class="card-body">
       <p class="login-box-msg">Login in to start your session</p>
-      <form  asp-action="Login" asp-controller="account" method="post">
+      <form  asp-action="Login" asp-controller="Account" method="post">
         <div class="input-group mb-3">
           <input asp-for="Email" type="email" class="form-control" autofocus placeholder="Email">
           <div class="input-group-append">
@@ -94,9 +96,9 @@
       <p class="mb-1">
         <a href="@Url.Action("ConfirmEmail","Account")">Forgot Password</a>
       </p>
-      <p class="mb-0">
+      @*<p class="mb-0">
         <a href="register.html" class="text-center">Register</a>
-      </p>
+      </p>*@
     </div>
     <!-- /.card-body -->
   </div>
