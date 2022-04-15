@@ -115,7 +115,7 @@ namespace UI.Services
             int recordsTotal = 0;
             List<ListItem> listItems = new List<ListItem>();
             listItems = (from lstItem in _appDbContext.ListItems join category in _appDbContext.ListItemCategories on lstItem.ListItemCategoryId equals category.ListItemCategoryId
-                         select new ListItem
+                         orderby lstItem.ListItemName select new ListItem
                          {
                              EncryptedId = protector.Protect(lstItem.ListItemId.ToString()),
                              ListItemCategory = category,

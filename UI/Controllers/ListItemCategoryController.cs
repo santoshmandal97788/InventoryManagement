@@ -13,11 +13,13 @@ namespace UI.Controllers
     {
         private readonly IListItemCategoryRepository _mockListItemCategoryRepository;
         private readonly IDataProtector protector;
+        private readonly ILogger<ListItemCategoryController> _logger;
 
-        public ListItemCategoryController(IListItemCategoryRepository mockListItemCategoryRepository, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings)
+        public ListItemCategoryController(ILogger<ListItemCategoryController> logger, IListItemCategoryRepository mockListItemCategoryRepository, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings)
         {
             _mockListItemCategoryRepository = mockListItemCategoryRepository;
             protector = dataProtectionProvider.CreateProtector(dataProtectionPurposeStrings.IdRouteValue);
+            _logger = logger;
         }
 
         [AcceptVerbs("Get", "Post")]
@@ -78,6 +80,7 @@ namespace UI.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex.Message);
                 throw ex;
             }
 
@@ -92,96 +95,140 @@ namespace UI.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult AddCategory(ListItemCategoryViewModel model)
         {
-            if (ModelState.IsValid)
+            try
             {
-                bool isexists = _mockListItemCategoryRepository.ListItemCategoryExists(model.ListItemCategoryName);
-                if (isexists)
+                if (ModelState.IsValid)
                 {
-                    ModelState.AddModelError("ListItemCategoryName", "ListItemCategoryName Already Exists");
-                    return View(model);
-                }
+                    bool isexists = _mockListItemCategoryRepository.ListItemCategoryExists(model.ListItemCategoryName);
+                    if (isexists)
+                    {
+                        ModelState.AddModelError("ListItemCategoryName", "ListItemCategoryName Already Exists");
+                        return View(model);
+                    }
 
-                ListItemCategory listItemCategory = new ListItemCategory
-                {
-                    ListItemCategoryName = model.ListItemCategoryName
-                };
-                _mockListItemCategoryRepository.ListItemCategoryIns(listItemCategory);
-                TempData["message"] = "List Item Category Added Successfully.";
-                return RedirectToAction("Index", "ListItemCategory");
+                    ListItemCategory listItemCategory = new ListItemCategory
+                    {
+                        ListItemCategoryName = model.ListItemCategoryName
+                    };
+                    _mockListItemCategoryRepository.ListItemCategoryIns(listItemCategory);
+                    TempData["message"] = "List Item Category Added Successfully.";
+                    return RedirectToAction("Index", "ListItemCategory");
+                }
+                return View();
             }
-            return View();
+            catch (Exception ex)
+            {
+                _logger.LogError("Unable to add ListItem Category", ex.Message);
+                throw ex;
+            }
+           
         }
         [HttpGet]
         public IActionResult Edit(string id)
         {
-            int listItemCategoryId = Convert.ToInt32(protector.Unprotect(id));
-            ListItemCategory listItemCategory = _mockListItemCategoryRepository.GetListItemCategory(listItemCategoryId);
-            if (listItemCategory == null)
+            try
             {
-                string msg = $"ListItemCategory with id: {id}, you are looking cannot be found";
-                TempData["errMessage"] = msg;
-                return RedirectToAction("NotFound", "Error");
+                int listItemCategoryId = Convert.ToInt32(protector.Unprotect(id));
+                ListItemCategory listItemCategory = _mockListItemCategoryRepository.GetListItemCategory(listItemCategoryId);
+                if (listItemCategory == null)
+                {
+                    string msg = $"ListItemCategory with id: {id}, you are looking cannot be found";
+                    TempData["errMessage"] = msg;
+                    return RedirectToAction("NotFound", "Error");
+                }
+                ListItemCategoryViewModel listItemCategoryViewModel = new ListItemCategoryViewModel
+                {
+                    ListItemCategoryId = listItemCategory.ListItemCategoryId,
+                    ListItemCategoryName = listItemCategory.ListItemCategoryName,
+                };
+                return View(listItemCategoryViewModel);
             }
-            ListItemCategoryViewModel listItemCategoryViewModel = new ListItemCategoryViewModel
+            catch (Exception ex)
             {
-                ListItemCategoryId  = listItemCategory.ListItemCategoryId,
-                ListItemCategoryName = listItemCategory.ListItemCategoryName,
-            };
-            return View(listItemCategoryViewModel);
+                _logger.LogError("Error while getting ListItem Category data for edit.", ex.Message);
+                throw;
+            }
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(ListItemCategoryViewModel model)
         {
-            if (ModelState.IsValid)
+            try
             {
-                bool isexists = _mockListItemCategoryRepository.ListItemCategoryExists(model.ListItemCategoryName);
-                ListItemCategory listItemCategory = _mockListItemCategoryRepository.GetListItemCategory(model.ListItemCategoryId);
-                if (isexists && listItemCategory.ListItemCategoryName != model.ListItemCategoryName)
+                if (ModelState.IsValid)
                 {
-                    ModelState.AddModelError("ListItemCategoryName", "ListItem CategoryName Already Exist");
-                    return View(model);
+                    bool isexists = _mockListItemCategoryRepository.ListItemCategoryExists(model.ListItemCategoryName);
+                    ListItemCategory listItemCategory = _mockListItemCategoryRepository.GetListItemCategory(model.ListItemCategoryId);
+                    if (isexists && listItemCategory.ListItemCategoryName != model.ListItemCategoryName)
+                    {
+                        ModelState.AddModelError("ListItemCategoryName", "ListItem CategoryName Already Exist");
+                        return View(model);
+                    }
+                    listItemCategory.ListItemCategoryName = model.ListItemCategoryName;
+                    ListItemCategory updatedCategory = _mockListItemCategoryRepository.ListItemCategoryUpd(listItemCategory);
+                    TempData["message"] = "ListItem  Category Updated Successfully";
+                    return RedirectToAction("Index");
                 }
-                listItemCategory.ListItemCategoryName = model.ListItemCategoryName;
-                ListItemCategory updatedCategory = _mockListItemCategoryRepository.ListItemCategoryUpd(listItemCategory);
-                TempData["message"] = "ListItem  Category Updated Successfully";
-                return RedirectToAction("Index");
+                return View(model);
             }
-            return View(model);
+            catch (Exception ex)
+            {
+                _logger.LogError("Error while updating ListItem Category data.", ex.Message);
+                throw;
+            }
+           
         }
         [HttpGet]
         public IActionResult Details(string id)
         {
-            int listItemCategoryId = Convert.ToInt32(protector.Unprotect(id));
-            var category = _mockListItemCategoryRepository.GetListItemCategory(listItemCategoryId);
-            if (category == null)
+            try
             {
-                Response.StatusCode = 404;
-                string msg = $"ListItemCategory with id: {id}, cannot be found";
-                TempData["errMessage"] = msg;
-                return RedirectToAction("NotFound", "Error");
+                int listItemCategoryId = Convert.ToInt32(protector.Unprotect(id));
+                var category = _mockListItemCategoryRepository.GetListItemCategory(listItemCategoryId);
+                if (category == null)
+                {
+                    Response.StatusCode = 404;
+                    string msg = $"ListItemCategory with id: {id}, cannot be found";
+                    TempData["errMessage"] = msg;
+                    return RedirectToAction("NotFound", "Error");
+                }
+                ListItemCategoryViewModel listItemCategoryViewModel = new ListItemCategoryViewModel() { ListItemCategoryId = category.ListItemCategoryId, ListItemCategoryName = category.ListItemCategoryName };
+                return View(listItemCategoryViewModel);
             }
-            ListItemCategoryViewModel listItemCategoryViewModel = new ListItemCategoryViewModel() { ListItemCategoryId = category.ListItemCategoryId, ListItemCategoryName = category.ListItemCategoryName };
-            return View(listItemCategoryViewModel);
+            catch (Exception ex)
+            {
+                _logger.LogError($"Unable to view ListItem Category Details. Invalid EncryptedListItemId: {id}", ex.Message);
+                throw;
+            }
+           
         }
 
         [HttpPost]
         //[ValidateAntiForgeryToken] //On uncomment Error  400 on AJax Call Request
         public IActionResult Delete(string id)
         {
-            int listItemCategoryId = Convert.ToInt32(protector.Unprotect(id));
-            var isListItemCategoryInUse = _mockListItemCategoryRepository.ListItemCategoryIsInUse(listItemCategoryId);
-            if (isListItemCategoryInUse)
+            try
             {
-                return Json(new { success = false, message = " Can not Delete! Category Is in Use." });
+                int listItemCategoryId = Convert.ToInt32(protector.Unprotect(id));
+                var isListItemCategoryInUse = _mockListItemCategoryRepository.ListItemCategoryIsInUse(listItemCategoryId);
+                if (isListItemCategoryInUse)
+                {
+                    return Json(new { success = false, message = " Can not Delete! Category Is in Use." });
+                }
+                ListItemCategory categoryToDelete = _mockListItemCategoryRepository.GetListItemCategory(listItemCategoryId);
+                if (categoryToDelete != null)
+                {
+                    _mockListItemCategoryRepository.ListItemCategoryDel(listItemCategoryId);
+                    return Json(new { success = true, message = "Deleted Successfully" });
+                }
+                return Json(new { success = false, message = "Something Went Wrong" });
             }
-            ListItemCategory categoryToDelete = _mockListItemCategoryRepository.GetListItemCategory(listItemCategoryId);
-            if (categoryToDelete != null)
+            catch (Exception ex)
             {
-                _mockListItemCategoryRepository.ListItemCategoryDel(listItemCategoryId);
-                return Json(new { success = true, message = "Deleted Successfully" });
+                _logger.LogError($"Unable to Delete ListItemCategory. Invalid EncryptedListItemId: {id}", ex.Message);
+                throw;
             }
-            return Json(new { success = false, message = "Something Went Wrong" });
+           
         }
     }
 }

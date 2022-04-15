@@ -17,9 +17,11 @@ namespace UI.Controllers
         private readonly IListItemRepository _mockListItemRepository;
         private readonly IRoleRepository _mockRoleRepository;
         private readonly IDataProtector protector;
+        private readonly ILogger<EmployeeController> _logger;
 
 
-        public EmployeeController(IEmployeeRepository mockEmployeeRepository,
+        public EmployeeController(ILogger<EmployeeController> logger, 
+                                    IEmployeeRepository mockEmployeeRepository,
                                     IListItemRepository mockListItemRepository,
                                     IPersonRepository mockPersonRepository,
                                     IRoleRepository mockRoleRepository,
@@ -31,6 +33,7 @@ namespace UI.Controllers
             _mockListItemRepository = mockListItemRepository;
             _mockRoleRepository = mockRoleRepository;
             protector = dataProtectionProvider.CreateProtector(dataProtectionPurposeStrings.IdRouteValue);
+            _logger = logger;
         }
         [AcceptVerbs("Get", "Post")]
         public IActionResult IsEmailExists(string email, int employeeId)
@@ -91,6 +94,7 @@ namespace UI.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex.Message);
                 throw ex;
             }
 
@@ -117,125 +121,161 @@ namespace UI.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult AddEmployee(EmployeeViewModel model)
         {
-            if (ModelState.IsValid)
+            try
             {
-                bool isexists = _mockEmployeeRepository.IsEmailInUse(model.Email);
-                if (isexists)
+                if (ModelState.IsValid)
                 {
-                    ModelState.AddModelError("Email", "Email Already Exists");
-                    return View(model);
+                    bool isexists = _mockEmployeeRepository.IsEmailInUse(model.Email);
+                    if (isexists)
+                    {
+                        ModelState.AddModelError("Email", "Email Already Exists");
+                        return View(model);
+                    }
+
+                    Employee emp = new Employee
+                    {
+                        Email = model.Email,
+                        Password = Helper.HashPassword(model.ConfirmPassword),
+                        //random generating password
+                        RoleId = model.RoleId,
+
+                    };
+                    Person person = new Person
+                    {
+                        FirstName = model.FirstName,
+                        MiddleName = model.MiddleName,
+                        LastName = model.LastName,
+                        GenderListItemId = model.GenderId
+                    };
+                    _mockEmployeeRepository.EmployeeIns(emp, person);
+                    TempData["message"] = "Employee Added Successfully";
+                    return RedirectToAction("Index", "Employee");
                 }
-
-                Employee emp = new Employee
-                {
-                    Email = model.Email,
-                    Password = Helper.HashPassword(model.ConfirmPassword),
-                    //random generating password
-                    RoleId = model.RoleId,
-
-                };
-                Person person = new Person
-                {
-                    FirstName = model.FirstName,
-                    MiddleName= model.MiddleName,
-                    LastName = model.LastName,
-                    GenderListItemId = model.GenderId
-                };
-                _mockEmployeeRepository.EmployeeIns(emp,person);
-                TempData["message"] = "Employee Added Successfully";
-                return RedirectToAction("Index", "Employee");
+                return View(model);
             }
-            return View(model);
+            catch (Exception ex)
+            {
+                _logger.LogError("Error while adding employee", ex.Message);
+                throw ex;
+            }
+           
         }
         [HttpGet]
         [Authorize]
         public IActionResult Edit(string id)
         
         {
+            try
+            {
+                int employeeId = Convert.ToInt32(protector.Unprotect(id));
+                Employee employee = _mockEmployeeRepository.GetEmployee(employeeId);
+                if (employee == null)
+                {
+                    string msg = $"Employee with id: {id}, you are looking cannot be found";
+                    TempData["errMessage"] = msg;
+                    return RedirectToAction("NotFound", "Error");
+                }
+                var genderList = _mockListItemRepository.GetAllListItemById(1).Select(p => new SelectListItem
+                {
+                    Value = p.ListItemId.ToString(),
+                    Text = p.ListItemName
+                }).ToList();
+                var roleList = _mockRoleRepository.GetAllRoles().Select(p => new SelectListItem
+                {
+                    Value = p.RoleId.ToString(),
+                    Text = p.RoleName
+                }).ToList();
 
-            int employeeId = Convert.ToInt32(protector.Unprotect(id));
-            Employee employee = _mockEmployeeRepository.GetEmployee(employeeId);
-            if (employee == null)
-            {
-                string  msg= $"Employee with id: {id}, you are looking cannot be found";
-                TempData["errMessage"] = msg;
-                return RedirectToAction("NotFound", "Error");
+                ViewBag.Gender = genderList;
+                ViewBag.Role = roleList;
+                EmployeeViewModel employeeViewModel = new EmployeeViewModel
+                {
+                    EmployeeId = employee.EmployeeId,
+                    PersonId = employee.PersonId,
+                    Email = employee.Email,
+                    FirstName = employee.Person.FirstName,
+                    MiddleName = employee.Person.MiddleName,
+                    LastName = employee.Person.LastName,
+                    GenderId = employee.Person.GenderListItemId,
+                    Gender = employee.Person.ListItem.ListItemName,
+                    RoleId = employee.Role.RoleId,
+                    RoleName = employee.Role.RoleName
+                };
+                return View(employeeViewModel);
             }
-            var genderList = _mockListItemRepository.GetAllListItemById(1).Select(p => new SelectListItem
+            catch (Exception ex)
             {
-                Value = p.ListItemId.ToString(),
-                Text = p.ListItemName
-            }).ToList();
-            var roleList = _mockRoleRepository.GetAllRoles().Select(p => new SelectListItem
-            {
-                Value = p.RoleId.ToString(),
-                Text = p.RoleName
-            }).ToList();
-            
-            ViewBag.Gender = genderList;
-            ViewBag.Role = roleList;
-            EmployeeViewModel employeeViewModel = new EmployeeViewModel
-            {
-                EmployeeId = employee.EmployeeId,
-                PersonId  = employee.PersonId,
-                Email = employee.Email,
-                FirstName= employee.Person.FirstName,
-                MiddleName = employee.Person.MiddleName,
-                LastName = employee.Person.LastName,
-                GenderId= employee.Person.GenderListItemId,
-                Gender = employee.Person.ListItem.ListItemName,
-                RoleId = employee.Role.RoleId,
-                RoleName= employee.Role.RoleName
-            };
-            return View(employeeViewModel);
+                _logger.LogError("Error while getting employee data for editing.", ex.Message);
+                throw ex;
+            }
+
+     
         }
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(EmployeeEditViewModel model)
         {
-            if (ModelState.IsValid)
+            try
             {
-                bool isexists = _mockEmployeeRepository.IsEmailInUse(model.Email);
-                Employee emp = _mockEmployeeRepository.GetEmployee(model.EmployeeId);
-                Person ppl =  _mockPersonRepository.GetPerson(model.PersonId);
-
-                if (isexists && emp.Email != model.Email)
+                if (ModelState.IsValid)
                 {
-                    ModelState.AddModelError("Email", "Email Already Exists");
-                    return View(model);
+                    bool isexists = _mockEmployeeRepository.IsEmailInUse(model.Email);
+                    Employee emp = _mockEmployeeRepository.GetEmployee(model.EmployeeId);
+                    Person ppl = _mockPersonRepository.GetPerson(model.PersonId);
+
+                    if (isexists && emp.Email != model.Email)
+                    {
+                        ModelState.AddModelError("Email", "Email Already Exists");
+                        return View(model);
+                    }
+                    emp.Email = model.Email;
+                    emp.RoleId = model.RoleId;
+
+                    ppl.FirstName = model.FirstName;
+                    ppl.MiddleName = model.MiddleName;
+                    ppl.LastName = model.LastName;
+                    ppl.GenderListItemId = model.GenderId;
+
+                    _mockEmployeeRepository.EmployeeUpd(emp, ppl);
+                    TempData["message"] = "Employee Updated Successfully";
+                    return RedirectToAction("Index");
                 }
-                emp.Email = model.Email;
-                emp.RoleId = model.RoleId;
+                return View(model);
 
-                ppl.FirstName = model.FirstName;
-                ppl.MiddleName = model.MiddleName;
-                ppl.LastName = model.LastName;
-                ppl.GenderListItemId = model.GenderId;
-
-               _mockEmployeeRepository.EmployeeUpd(emp, ppl);
-                TempData["message"] = "Employee Updated Successfully";
-                return RedirectToAction("Index");
             }
-            return View(model);
+            catch (Exception ex)
+            {
+                _logger.LogError("Error while updating employee data.", ex.Message);
+                throw;
+            }
+           
         }
 
         [HttpGet]
         [Authorize]
         public IActionResult Details(string id)
         {
-
-            int employeeId = Convert.ToInt32(protector.Unprotect(id));
-            var employee = _mockEmployeeRepository.GetEmployeeDetails(employeeId);
-            if (employee == null)
+            try
             {
-                Response.StatusCode = 404;
-                string msg = $"Employee with id: {id}, you are looking cannot be found";
-                TempData["errMessage"] = msg;
-                return RedirectToAction("NotFound", "Error");
+                int employeeId = Convert.ToInt32(protector.Unprotect(id));
+                var employee = _mockEmployeeRepository.GetEmployeeDetails(employeeId);
+                if (employee == null)
+                {
+                    Response.StatusCode = 404;
+                    string msg = $"Employee with id: {id}, you are looking cannot be found";
+                    TempData["errMessage"] = msg;
+                    return RedirectToAction("NotFound", "Error");
+                }
+                // EmployeeViewModel employeeViewModel = new EmployeeViewModel() { EmployeeId = employee.EmployeeId, PersonId = employee.PersonId, FirstName = employee.Person.FirstName, MiddleName= employee.Person.MiddleName, LastName= employee.Person.LastName, Gender= employee.Person.ListItem.ListItemName, Email= employee.Email, RoleId= employee.RoleId, RoleName= employee.Role.RoleName};
+                return View(employee);
             }
-           // EmployeeViewModel employeeViewModel = new EmployeeViewModel() { EmployeeId = employee.EmployeeId, PersonId = employee.PersonId, FirstName = employee.Person.FirstName, MiddleName= employee.Person.MiddleName, LastName= employee.Person.LastName, Gender= employee.Person.ListItem.ListItemName, Email= employee.Email, RoleId= employee.RoleId, RoleName= employee.Role.RoleName};
-            return View(employee);
+            catch (Exception ex)
+            {
+                _logger.LogError($"Unable to view Employee Details. Invalid EncryptedEmployeeId: {id}", ex.Message);
+                throw;
+            }
+           
 
         }
 
@@ -243,21 +283,31 @@ namespace UI.Controllers
         [Authorize]
         public IActionResult Delete(string id)
         {
-            int employeeId = Convert.ToInt32(protector.Unprotect(id));
-            Employee employeeToDelete = _mockEmployeeRepository.GetEmployee(employeeId);
-            if (employeeToDelete != null)
+            try
             {
-                _mockEmployeeRepository.EmployeeDel(employeeId);
-                return Json(new { success = true, message = "Deleted Successfully" });
+                int employeeId = Convert.ToInt32(protector.Unprotect(id));
+                Employee employeeToDelete = _mockEmployeeRepository.GetEmployee(employeeId);
+                if (employeeToDelete != null)
+                {
+                    _mockEmployeeRepository.EmployeeDel(employeeId);
+                    return Json(new { success = true, message = "Deleted Successfully" });
+                }
+                else
+                {
+                    Response.StatusCode = 404;
+                    string msg = $"Employee with id: {id}, you are looking cannot be found";
+                    TempData["errMessage"] = msg;
+                    return RedirectToAction("NotFound", "Error");
+                }
+                return Json(new { success = false, message = "Something Went Wrong" });
+
             }
-            else
+            catch (Exception ex)
             {
-                  Response.StatusCode = 404;
-                string msg = $"Employee with id: {id}, you are looking cannot be found";
-                TempData["errMessage"] = msg;
-                return RedirectToAction("NotFound", "Error");
+                _logger.LogError($"Unable to Delete Employee. Invalid EncryptedRoleId: {id}", ex.Message);
+                throw;
             }
-            return Json(new { success = false, message = "Something Went Wrong" });
+           
         }
     }
 }

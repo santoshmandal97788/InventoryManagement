@@ -211,6 +211,7 @@ namespace UI.Services.MockService
                              join person in _appDbContext.Persons on emp.PersonId equals person.PersonId
                              join Li in _appDbContext.ListItems on person.GenderListItemId equals Li.ListItemId
                              join role in _appDbContext.Roles on emp.RoleId equals role.RoleId
+                             orderby emp.Email
                              select new EmployeeViewModel
                              {
                                  EmployeeId = emp.EmployeeId,

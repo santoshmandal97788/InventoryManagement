@@ -6,6 +6,7 @@
 //Datatabale for role 
 $(document).ready(function () {
     dataTable = $("#roleDataTable").DataTable({
+        "responsive": true,
         "processing": true,
         "serverSide": true,
         "ajax": {
@@ -14,9 +15,9 @@ $(document).ready(function () {
             "datatype": "json",
         },
         "columns": [
-            { "data": "roleId", "visible": false },
+            { "data": "roleId", "name":"RoleId", "visible": false },
             { "data": "encryptedId", "visible": false },
-            { "data": "roleName", "autoWidth": true },
+            { "data": "roleName", "name": "RoleName", "autoWidth": true },
             {
                 "data": "roleId", "orderable": false, "render": function (data, type, row) {
                     var details = "Details&nbsp;View&nbsp;Of&nbsp;Role";

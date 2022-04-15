@@ -15,8 +15,8 @@ namespace UI.Controllers
         private readonly IAccountService _accountService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IEmployeeRepository _mockEmployeeRepository;
-
-        public AccountController(IAccountService accountService, IEmployeeRepository mockEmployeeRepository , IHttpContextAccessor httpContextAccessor)
+        private readonly ILogger<AccountController> _logger;
+        public AccountController(ILogger<AccountController> logger, IAccountService accountService, IEmployeeRepository mockEmployeeRepository , IHttpContextAccessor httpContextAccessor)
         {
             _accountService = accountService;
             _httpContextAccessor = httpContextAccessor;
@@ -43,12 +43,13 @@ namespace UI.Controllers
 
             if (ModelState.IsValid)
             {
-                var user =  _accountService.AuthenticateUser(model.Email, model.Password);
+                var user = _accountService.AuthenticateUser(model.Email, model.Password);
 
                 if (user == null)
                 {
                     ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                     ViewBag.Error = "Invalid login attempt.";
+                    _logger.LogWarning($"Invalid login!! User with provided email:{model.Email} and password doesnot match");
                     return View();
                 }
 
@@ -66,7 +67,7 @@ namespace UI.Controllers
 
                 var authProperties = new AuthenticationProperties
                 {
-                   
+
                 };
 
                 await HttpContext.SignInAsync(
@@ -86,6 +87,7 @@ namespace UI.Controllers
 
             // Something failed. Redisplay the form.
             return View(model);
+
         }
 
         [HttpPost]
@@ -93,8 +95,16 @@ namespace UI.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return RedirectToAction("Login","Account");
+            try
+            {
+                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+               
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Unable to Logout", ex.Message);
+            }
+            return RedirectToAction("Login", "Account");
         }
 
         [HttpGet]
@@ -109,25 +119,40 @@ namespace UI.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
         {
+
             if (ModelState.IsValid)
             {
-                var id = _httpContextAccessor.HttpContext.User.Claims.FirstOrDefault(c => c.Type == "Id")?.Value;
-                int loggedInUserId = Convert.ToInt32(id);
-
-                var employee =  _mockEmployeeRepository.GetEmployeeForPasswordReset(loggedInUserId);
-                if (employee.Password !=Helper.HashPassword(model.CurrentPassword))
+                try
                 {
-                    ViewBag.Error = "Current Password does not match.";
-                    return View(model);
+                    var id = _httpContextAccessor.HttpContext.User.Claims.FirstOrDefault(c => c.Type == "Id")?.Value;
+                    if (string.IsNullOrEmpty(id))
+                    {
+                        _logger.LogError("User must be logged in. Id is null");
+                    }
+                    int loggedInUserId = Convert.ToInt32(id);
+
+                    var employee = _mockEmployeeRepository.GetEmployeeForPasswordReset(loggedInUserId);
+                    if (employee.Password != Helper.HashPassword(model.CurrentPassword))
+                    {
+                        ViewBag.Error = "Current Password does not match.";
+                        return View(model);
+                    }
+                    employee.Password = Helper.HashPassword(model.ConfirmPassword);
+                    var result = _accountService.ChangePassword(employee);
+                    await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    TempData["message"] = "Password Changed Successfully.";
+                    return RedirectToAction("Login", "Account");
                 }
-                employee.Password = Helper.HashPassword(model.ConfirmPassword);
-                var result = _accountService.ChangePassword(employee);
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                TempData["message"] = "Password Changed Successfully.";
-                return RedirectToAction("Login", "Account");
+                catch (Exception ex)
+                {
+                    _logger.LogError("ex.message");
+                   
+                }
+              
 
             }
             return View(model);
+
         }
         [HttpGet]
         [AllowAnonymous]
@@ -146,11 +171,13 @@ namespace UI.Controllers
                 if (employee == null)
                 {
                     ViewBag.Error = "Email does not match.";
+                    _logger.LogError($"Email:{model.Email} doesnot match in database");
                     return View(model);
                 }
                 return RedirectToAction("ResetPassword", "Account", new { id = employee.EmployeeId });
             }
             return View(model);
+
         }
         [HttpGet]
         [AllowAnonymous]
@@ -163,12 +190,14 @@ namespace UI.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult ResetPassword(int id, ResetPasswordViewModel model)
         {
+
             if (ModelState.IsValid)
             {
                 var employee = _mockEmployeeRepository.GetEmployee(id);
                 if (employee == null)
                 {
                     ViewBag.Error = "Something Went Wrong. Try Again Later!.";
+                    _logger.LogError($"Employee with Id: {id} does not exists");
                     return View(model);
                 }
                 employee.Password = Helper.HashPassword(model.ConfirmPassword);

@@ -93,7 +93,7 @@ namespace UI.Services
         {
             int recordsTotal = 0;
             List<ListItemCategory> listItemCategory= new List<ListItemCategory>();
-            listItemCategory = (from cat in _appDbContext.ListItemCategories
+            listItemCategory = (from cat in _appDbContext.ListItemCategories orderby cat.ListItemCategoryName
                                 select new ListItemCategory
                                 {
                                     EncryptedId = protector.Protect(cat.ListItemCategoryId.ToString()),
