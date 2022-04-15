@@ -15,12 +15,14 @@ namespace UI.Controllers
         private readonly IListItemRepository _mockListItemRepository;
         private readonly IListItemCategoryRepository _mockListItemCategoryRepository;
         private readonly IDataProtector protector;
+        private readonly ILogger<ListItemController> _logger;
 
-        public ListItemController(IListItemRepository mockListItemRepository, IListItemCategoryRepository mockListItemCategoryRepository, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings)
+        public ListItemController(ILogger<ListItemController> logger, IListItemRepository mockListItemRepository, IListItemCategoryRepository mockListItemCategoryRepository, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings)
         {
             _mockListItemRepository = mockListItemRepository;
             _mockListItemCategoryRepository = mockListItemCategoryRepository;
             protector = dataProtectionProvider.CreateProtector(dataProtectionPurposeStrings.IdRouteValue);
+            _logger = logger;
         }
 
         [AcceptVerbs("Get", "Post")]
@@ -81,6 +83,7 @@ namespace UI.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex.Message);
                 throw ex;
             }
 
@@ -100,106 +103,151 @@ namespace UI.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult AddListItem(ListItemViewModel model)
         {
-            if (ModelState.IsValid)
+            try
             {
-                bool isexists = _mockListItemRepository.ListItemNameExists(model.ListItemName);
-                if (isexists)
+                if (ModelState.IsValid)
                 {
-                    ModelState.AddModelError("ListItemName", "ListItemName Already Exists");
-                    return View(model);
-                }
+                    bool isexists = _mockListItemRepository.ListItemNameExists(model.ListItemName);
+                    if (isexists)
+                    {
+                        ModelState.AddModelError("ListItemName", "ListItemName Already Exists");
+                        return View(model);
+                    }
 
-                ListItem listItem= new ListItem
-                {
-                    ListItemCategoryId = model.ListItemCategoryId,
-                    ListItemName = model.ListItemName
-                };
-                _mockListItemRepository.ListItemIns(listItem);
-                TempData["message"] = "ListItem Added Successfully.";
-                return RedirectToAction("Index", "ListItem");
+                    ListItem listItem = new ListItem
+                    {
+                        ListItemCategoryId = model.ListItemCategoryId,
+                        ListItemName = model.ListItemName
+                    };
+                    _mockListItemRepository.ListItemIns(listItem);
+                    TempData["message"] = "ListItem Added Successfully.";
+                    return RedirectToAction("Index", "ListItem");
+                }
+                return View();
             }
-            return View();
+            catch (Exception ex)
+            {
+                _logger.LogError("Unable to add ListItem.", ex.Message);
+                throw;
+            }
+           
         }
         [HttpGet]
         public IActionResult Edit(string id)
         {
-            int listItemId = Convert.ToInt32(protector.Unprotect(id));
-            ListItem listItem = _mockListItemRepository.GetListItem(listItemId);
-            if (listItem == null)
+            try
             {
-                string msg = $"ListItem with id: {id}, cannot be found";
-                TempData["errMessage"] = msg;
-                return RedirectToAction("NotFound", "Error");
+                int listItemId = Convert.ToInt32(protector.Unprotect(id));
+                ListItem listItem = _mockListItemRepository.GetListItem(listItemId);
+                if (listItem == null)
+                {
+                    string msg = $"ListItem with id: {id}, cannot be found";
+                    TempData["errMessage"] = msg;
+                    return RedirectToAction("NotFound", "Error");
+                }
+                var categoryList = _mockListItemCategoryRepository.GetAllListItemCategory().Select(p => new SelectListItem
+                {
+                    Value = p.ListItemCategoryId.ToString(),
+                    Text = p.ListItemCategoryName
+                }).ToList();
+                ViewBag.Category = categoryList;
+                ListItemViewModel listItemViewModel = new ListItemViewModel
+                {
+                    ListItemId = listItem.ListItemId,
+                    ListItemCategoryId = listItem.ListItemCategoryId,
+                    ListItemCategoryName = listItem.ListItemCategory.ListItemCategoryName,
+                    ListItemName = listItem.ListItemName
+                };
+                return View(listItemViewModel);
             }
-            var categoryList = _mockListItemCategoryRepository.GetAllListItemCategory().Select(p => new SelectListItem
+            catch (Exception ex)
             {
-                Value = p.ListItemCategoryId.ToString(),
-                Text = p.ListItemCategoryName
-            }).ToList();
-            ViewBag.Category = categoryList;
-            ListItemViewModel listItemViewModel = new ListItemViewModel
-            {
-                ListItemId = listItem.ListItemId,
-                ListItemCategoryId = listItem.ListItemCategoryId,
-                ListItemCategoryName = listItem.ListItemCategory.ListItemCategoryName,
-                ListItemName = listItem.ListItemName
-            };
-            return View(listItemViewModel);
+                _logger.LogError("Error while getting ListItem data for edit.", ex.Message);
+                throw;
+            }
+           
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(ListItemViewModel model)
         {
-            if (ModelState.IsValid)
+            try
             {
-                bool isexists = _mockListItemRepository.ListItemNameExists(model.ListItemName);
-                ListItem listItem = _mockListItemRepository.GetListItem(model.ListItemId);
-                if (isexists && listItem.ListItemName != model.ListItemName)
+                if (ModelState.IsValid)
                 {
-                    ModelState.AddModelError("ListItemName", "ListItem Name Already Exist");
-                    return View(model);
+                    bool isexists = _mockListItemRepository.ListItemNameExists(model.ListItemName);
+                    ListItem listItem = _mockListItemRepository.GetListItem(model.ListItemId);
+                    if (isexists && listItem.ListItemName != model.ListItemName)
+                    {
+                        ModelState.AddModelError("ListItemName", "ListItem Name Already Exist");
+                        return View(model);
+                    }
+                    listItem.ListItemCategoryId = model.ListItemCategoryId;
+                    listItem.ListItemName = model.ListItemName;
+                    ListItem updatedListItem = _mockListItemRepository.ListItemUpd(listItem);
+                    TempData["message"] = "ListItem Updated Successfully.";
+                    return RedirectToAction("Index");
                 }
-                listItem.ListItemCategoryId = model.ListItemCategoryId;
-                listItem.ListItemName = model.ListItemName;
-                ListItem updatedListItem = _mockListItemRepository.ListItemUpd(listItem);
-                TempData["message"] = "ListItem Updated Successfully.";
-                return RedirectToAction("Index");
+                return View(model);
             }
-            return View(model);
+            catch (Exception ex)
+            {
+                _logger.LogError("Error while updating ListItem data.", ex.Message);
+                throw;
+            }
+          
         }
         [HttpGet]
         public IActionResult Details(string id)
         {
-            int listItemId = Convert.ToInt32(protector.Unprotect(id));
-            var listItem = _mockListItemRepository.GetListItem(listItemId);
-            if (listItem == null)
+            try
             {
-                Response.StatusCode = 404;
-                string msg = $"ListItem with id: {id}, cannot be found";
-                TempData["errMessage"] = msg;
-                return RedirectToAction("NotFound", "Error");
+                int listItemId = Convert.ToInt32(protector.Unprotect(id));
+                var listItem = _mockListItemRepository.GetListItem(listItemId);
+                if (listItem == null)
+                {
+                    Response.StatusCode = 404;
+                    string msg = $"ListItem with id: {id}, cannot be found";
+                    TempData["errMessage"] = msg;
+                    return RedirectToAction("NotFound", "Error");
+                }
+                ListItemViewModel listItemViewModel = new ListItemViewModel() { ListItemId = listItem.ListItemId, ListItemCategoryId = listItem.ListItemCategoryId, ListItemCategoryName = listItem.ListItemCategory.ListItemCategoryName, ListItemName = listItem.ListItemName };
+                return View(listItemViewModel);
             }
-            ListItemViewModel listItemViewModel = new ListItemViewModel() { ListItemId = listItem.ListItemId, ListItemCategoryId = listItem.ListItemCategoryId, ListItemCategoryName= listItem.ListItemCategory.ListItemCategoryName, ListItemName= listItem.ListItemName };
-            return View(listItemViewModel);
+            catch (Exception ex)
+            {
+                _logger.LogError($"Unable to view ListItem Details. Invalid EncryptedListItemId: {id}", ex.Message);
+                throw;
+            }
+          
         }
 
         [HttpPost]
         //[ValidateAntiForgeryToken]
         public IActionResult Delete(string id)
         {
-            int listItemId = Convert.ToInt32(protector.Unprotect(id));
-            var isListItemInUse = _mockListItemRepository.ListItemAssignToPerson(listItemId);
-            if (isListItemInUse)
+            try
             {
-                return Json(new { success = false, message = " Can not Delete! List Item Is in Use." });
+                int listItemId = Convert.ToInt32(protector.Unprotect(id));
+                var isListItemInUse = _mockListItemRepository.ListItemAssignToPerson(listItemId);
+                if (isListItemInUse)
+                {
+                    return Json(new { success = false, message = " Can not Delete! List Item Is in Use." });
+                }
+                ListItem listItemToDelete = _mockListItemRepository.GetListItem(listItemId);
+                if (listItemToDelete != null)
+                {
+                    _mockListItemRepository.ListItemDel(listItemId);
+                    return Json(new { success = true, message = "Deleted Successfully" });
+                }
+                return Json(new { success = false, message = "Something Went Wrong" });
             }
-            ListItem listItemToDelete = _mockListItemRepository.GetListItem(listItemId);
-            if (listItemToDelete != null)
+            catch (Exception ex)
             {
-                _mockListItemRepository.ListItemDel(listItemId);
-                return Json(new { success = true, message = "Deleted Successfully" });
+                _logger.LogError($"Unable to Delete ListItem. Invalid EncryptedListItemId: {id}", ex.Message);
+                throw;
             }
-            return Json(new { success = false, message = "Something Went Wrong" });
+           
         }
     }
 }

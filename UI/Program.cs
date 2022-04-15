@@ -1,19 +1,34 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using System.Configuration;
+using NLog.Web;
+using Serilog;
 using UI.Data;
 using UI.Security;
 using UI.Services;
 using UI.Services.IService;
 using UI.Services.MockService;
-using UI.ViewModel;
+
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((hostingContext, loggerConfiguration) =>
+{
+    loggerConfiguration.ReadFrom.Configuration(hostingContext.Configuration);
+});
+//var log = new LoggerConfiguration()
+//    .WriteTo.File("log.txt", rollingInterval: RollingInterval.Day)
+//    .CreateLogger();
 
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddControllersWithViews();
+
+//// NLog: Setup NLog for Dependency injection
+//builder.Logging.ClearProviders();
+//builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
+//builder.Host.UseNLog();
+
+
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -50,7 +65,7 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error /Error");
+    app.UseExceptionHandler("/Error/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }

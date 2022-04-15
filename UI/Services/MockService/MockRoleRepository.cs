@@ -94,7 +94,7 @@ namespace UI.Services
         {
             int recordsTotal = 0;
             List<Role> roleList = new List<Role>();
-            roleList= (from role in _appDbContext.Roles select new Role
+            roleList= (from role in _appDbContext.Roles orderby role.RoleName select new Role
             {
                 EncryptedId = protector.Protect(role.RoleId.ToString()),
                // RoleId = role.RoleId,
@@ -103,7 +103,7 @@ namespace UI.Services
             //roleList = _appDbContext.Roles.Skip(skip).Take(pageSize).ToList();
             if (!(string.IsNullOrEmpty(sortColumn) && string.IsNullOrEmpty(sortColumnDirection)))
             {
-                roleList = roleList.OrderByDescending(s => sortColumn + " " + sortColumnDirection).ToList();
+                roleList = roleList.OrderBy(s => sortColumn + " " + sortColumnDirection).ToList();
             }
             if (!string.IsNullOrEmpty(searchValue))
             {
